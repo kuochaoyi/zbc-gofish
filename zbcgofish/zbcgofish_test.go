@@ -1,32 +1,66 @@
 package zbcgofish_test
 
 import (
-	"context"
-	"fmt"
-	"log"
+	"reflect"
 	"testing"
 
+	"github.com/kuochaoyi/zbc-gofish/zbcgofish"
 	"github.com/zeebe-io/zeebe/clients/go/pkg/zbc"
 )
 
-const brokerAddr string = "0.0.0.0:26500"
-const BpmnPid string = "order-process"
-const jobType string = "payment-service"
-
-var zbclient zbc.Client = GetClient(brokerAddr)
-var ctx = context.Background()
+const (
+	BrokerAddr    = "0.0.0.0:26500"
+	BPMNProcessId = "order-process-4"
+	// JobType	= "payment-service"
+)
 
 func TestGetClient(t *testing.T) {
-
-	zbclient := GetClient(brokerAddr)
-
-	if zbclient == nil {
-		t.Error("Fail to get a ZbClient.")
+	type args struct {
+		brokerAddr string
 	}
-
+	tests := []struct {
+		name string
+		args args
+		want zbc.Client
+	}{
+		// TODO: Add test cases.
+		{BrokerAddr, args{BrokerAddr}, zbcgofish.GetClient(BrokerAddr)},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := zbcgofish.GetClient(tt.args.brokerAddr); !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("GetClient() = %v, want %v", got, tt.want)
+			}
+		})
+	}
 }
 
-func TestGetTopology(t *testing.T) {
+func TestCreateInstance(t *testing.T) {
+	var variables = make(map[string]interface{})
+	variables["orderId"] = "31243"
+
+	type args struct {
+		BpmnPID  string
+		FormVars map[string]interface{}
+	}
+	tests := []struct {
+		name string
+		args args
+		want string
+	}{
+		// TODO: Add test cases.
+		{BPMNProcessId, args{BPMNProcessId, variables}, ""},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := zbcgofish.CreateInstance(tt.args.BpmnPID, tt.args.FormVars); got != tt.want {
+				t.Errorf("CreateInstance() = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+/*func TestGetTopology(t *testing.T) {
 
 	topology, err := zbclient.NewTopologyCommand().Send(ctx)
 
@@ -59,4 +93,4 @@ func TestHandleTask(t *testing.T) {
 
 	HandleTask(jobType)
 
-}
+}*/

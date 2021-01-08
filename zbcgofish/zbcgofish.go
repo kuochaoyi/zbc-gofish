@@ -3,7 +3,7 @@ package zbcgofish
 /*
 	Lib: https://github.com/zeebe-io/zeebe/tree/develop/clients/go
 	Example: https://github.com/zeebe-io/zeebe-get-started-go-client
- */
+*/
 
 import (
 	"context"
@@ -16,28 +16,50 @@ import (
 )
 
 const brokerAddr string = "0.0.0.0:26500"
-const jobType string = "payment-service"
 
-var zbclent zbc.Client
+// const jobType string = "payment-service"
+
+// var zbClient zbc.Client
 var ctx = context.Background()
 
+// Get a zbc client.
 func GetClient(brokerAddr string) zbc.Client {
 
-	client, err := zbc.NewClient(&zbc.ClientConfig{
+	zbc, err := zbc.NewClient(&zbc.ClientConfig{
 		GatewayAddress:         brokerAddr,
 		UsePlaintextConnection: true,
 	})
-
 	if err != nil {
 		panic(err)
 	}
 
-	return client
+	return zbc
+}
+
+// BpmnPID ex. "order-process-4"
+// FormVars ex. variables["orderId"] = "31243" ...
+// result ex. 2020/08/06 14:39:14 workflowKey:2251799813685373 bpmnProcessId:"order-process" version:6 workflowInstanceKey:2251799813685588
+func CreateInstance(BpmnPID string, FormVars map[string]interface{}) string {
+	zbc := GetClient(brokerAddr)
+
+	request, err := zbc.NewCreateInstanceCommand().
+		BPMNProcessId(BpmnPID).LatestVersion().
+		VariablesFromMap(FormVars)
+	if err != nil {
+		panic(err)
+	}
+
+	// ctx := context.Background()
+	msg, err := request.Send(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	return msg.String()
 }
 
 // Get Roles for Zbc topology.
 func GetTopology() {
-
 	zbclient := GetClient(brokerAddr)
 
 	topology, err := zbclient.NewTopologyCommand().Send(ctx)
@@ -65,32 +87,7 @@ func RoleToString(role pb.Partition_PartitionBrokerRole) string {
 	}
 }
 
-func CreateInstance(FormVars map[string]interface{}, BpmnPid string) string {
-
-	zbclient := GetClient(brokerAddr)
-
-	request, err := zbclient.NewCreateInstanceCommand().
-		BPMNProcessId(BpmnPid).LatestVersion().
-		VariablesFromMap(FormVars)
-	if err != nil {
-		panic(err)
-	}
-
-	// ctx := context.Background()
-	msg, err := request.Send(ctx)
-	if err != nil {
-		panic(err)
-	}
-
-	// fmt.Println(msg.String())
-	/*
-		2020/08/06 14:39:14 workflowKey:2251799813685373 bpmnProcessId:"order-process" version:6 workflowInstanceKey:2251799813685588
-	*/
-	return msg.String()
-}
-
 // Tasks
-
 func HandleTask(jobType string) {
 
 	zbclient := GetClient(brokerAddr)
